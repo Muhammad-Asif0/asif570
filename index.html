@@ -14,6 +14,7 @@
         <link href="https://fonts.googleapis.com/css?family=Muli:400,400i,800,800i" rel="stylesheet" type="text/css" />
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     </head>
     <body id="page-top">
         <!-- Navigation-->
@@ -30,7 +31,9 @@
                     <li class="nav-item"><a class="nav-link js-scroll-trigger" href="#education">Education</a></li>
                     <li class="nav-item"><a class="nav-link js-scroll-trigger" href="#skills">Skills</a></li>
                     <li class="nav-item"><a class="nav-link js-scroll-trigger" href="#interests">Interests</a></li>
-                    <li class="nav-item"><a class="nav-link js-scroll-trigger" href="#awards">Awards</a></li>
+                    <li class="nav-item"><a class="nav-link js-scroll-trigger" href="#github-summary">Repo Summary</a></li>
+                    <li class="nav-item"><a class="nav-link js-scroll-trigger" href="#github-details">PR and Issues</a></li>
+
                 </ul>
             </div>
         </nav>
@@ -49,10 +52,10 @@
                     </div>
                     <p class="lead mb-5">I am experienced in leveraging agile frameworks to provide a robust synopsis for high level overviews. Iterative approaches to corporate strategy foster collaborative thinking to further the overall value proposition.</p>
                     <div class="social-icons">
-                        <a class="social-icon" href="https://www.linkedin.com/in/muhamad-asif-61b6271b6/"><i class="fab fa-linkedin-in"></i></a>
-                        <a class="social-icon" href="https://github.com/Muhammad-Asif0"><i class="fab fa-github"></i></a>
+                        <a class="social-icon" href="https://www.linkedin.com/in/afi570/"><i class="fab fa-linkedin-in"></i></a>
+                        <a class="social-icon" href="https://github.com/axif0"><i class="fab fa-github"></i></a>
                         <a class="social-icon" href="https://twitter.com/mdasif_mdasif"><i class="fab fa-twitter"></i></a>
-                        <a class="social-icon" href="https://www.facebook.com/mdasif570/"><i class="fab fa-facebook-f"></i></a>
+                        <a class="social-icon" href="https://www.facebook.com/afi570/"><i class="fab fa-facebook-f"></i></a>
                     </div>
                 </div>
             </section>
@@ -159,20 +162,29 @@ Brac Universityr</h3>
                 </div>
             </section>
             <hr class="m-0" />
-            <!-- Awards-->
-            <section class="resume-section" id="awards">
+ 
+            <!-- Add a container to display the repository summary chart -->
+            <section class="resume-section" id="github-summary">
                 <div class="resume-section-content">
-                    <h2 class="mb-5">Awards & Certifications</h2>
-                    <ul class="fa-ul mb-0">
-                        
-                            
-                        <li>
-                            <span class="fa-li"><i class="fas fa-trophy text-warning"></i></span>
-                            1
-                            <sup>rd</sup>
-                            Place - :)
-                        </li>
-                    </ul>
+                    <h2 class="mb-5">GitHub Repository Summary</h2>
+                    <canvas id="repo-summary-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Add a container to display the pull requests and issues -->
+            <section class="resume-section" id="github-details">
+                <div class="resume-section-content">
+                    <h2 class="mb-5">GitHub Pull Requests and Issues</h2>
+                    <div class="btn-group mb-3" role="group">
+                        <button type="button" class="btn btn-primary active" id="pr-btn">Pull Requests</button>
+                        <button type="button" class="btn btn-primary" id="issue-btn">Issues</button>
+                    </div>
+                    <div id="pr-container">
+                        <!-- Pull requests will be dynamically added here -->
+                    </div>
+                    <div id="issue-container" style="display: none;">
+                        <!-- Issues will be dynamically added here -->
+                    </div>
                 </div>
             </section>
         </div>
@@ -183,5 +195,257 @@ Brac Universityr</h3>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
         <!-- Core theme JS-->
         <script src="js/scripts.js"></script>
+
+        <!-- Add a new script tag for the GitHub summary functionality -->
+        <script>
+            function getRepoSummary(username) {
+                const repoSummary = {};
+
+                // Fetch open pull requests
+                fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${username}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const repoName = item.repository_url.split('/').pop();
+                            if (!repoSummary[repoName]) {
+                                repoSummary[repoName] = {
+                                    open_prs: 0,
+                                    closed_prs: 0,
+                                    open_issues: 0,
+                                    closed_issues: 0
+                                };
+                            }
+                            repoSummary[repoName].open_prs++;
+                        });
+
+                        // Fetch closed pull requests
+                        return fetch(`https://api.github.com/search/issues?q=is:pr+author:${username}+archived:false+is:closed`);
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const repoName = item.repository_url.split('/').pop();
+                            if (!repoSummary[repoName]) {
+                                repoSummary[repoName] = {
+                                    open_prs: 0,
+                                    closed_prs: 0,
+                                    open_issues: 0,
+                                    closed_issues: 0
+                                };
+                            }
+                            repoSummary[repoName].closed_prs++;
+                        });
+
+                        // Fetch open issues
+                        return fetch(`https://api.github.com/search/issues?q=is:issue+author:${username}+archived:false+is:open`);
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const repoName = item.repository_url.split('/').pop();
+                            if (!repoSummary[repoName]) {
+                                repoSummary[repoName] = {
+                                    open_prs: 0,
+                                    closed_prs: 0,
+                                    open_issues: 0,
+                                    closed_issues: 0
+                                };
+                            }
+                            repoSummary[repoName].open_issues++;
+                        });
+
+                        // Fetch closed issues
+                        return fetch(`https://api.github.com/search/issues?q=is:issue+author:${username}+archived:false+is:closed`);
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const repoName = item.repository_url.split('/').pop();
+                            if (!repoSummary[repoName]) {
+                                repoSummary[repoName] = {
+                                    open_prs: 0,
+                                    closed_prs: 0,
+                                    open_issues: 0,
+                                    closed_issues: 0
+                                };
+                            }
+                            repoSummary[repoName].closed_issues++;
+                        });
+
+                        // Display the repository summary chart
+                        const chartData = {
+                            labels: Object.keys(repoSummary),
+                            datasets: [
+                                {
+                                    label: 'Open PRs',
+                                    data: Object.values(repoSummary).map(counts => counts.open_prs),
+                                    backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                },
+                                {
+                                    label: 'Closed PRs',
+                                    data: Object.values(repoSummary).map(counts => counts.closed_prs),
+                                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                },
+                                {
+                                    label: 'Open Issues',
+                                    data: Object.values(repoSummary).map(counts => counts.open_issues),
+                                    backgroundColor: 'rgba(255, 206, 86, 0.8)',
+                                },
+                                {
+                                    label: 'Closed Issues',
+                                    data: Object.values(repoSummary).map(counts => counts.closed_issues),
+                                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                                },
+                            ],
+                        };
+
+                        const chartOptions = {
+                            scales: {
+                                x: {
+                                    stacked: true,
+                                },
+                                y: {
+                                    stacked: true,
+                                    beginAtZero: true,
+                                    ticks: {
+                                        stepSize: 1,
+                                    },
+                                },
+                            },
+                        };
+
+                        new Chart(document.getElementById('repo-summary-chart'), {
+                            type: 'bar',
+                            data: chartData,
+                            options: chartOptions,
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            // Replace 'axif0' with the desired GitHub username
+            getRepoSummary('axif0');
+        </script>
+
+        <!-- Add a new script tag for the GitHub details functionality -->
+        <script>
+            function getPullRequests(username) {
+                const prContainer = document.getElementById('pr-container');
+                prContainer.innerHTML = ''; // Clear previous results
+
+                // Fetch open pull requests
+                fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${username}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const prCard = document.createElement('div');
+                            prCard.classList.add('card', 'mb-3');
+                            prCard.innerHTML = `
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">${item.repository_url.split('/').pop()}</h6>
+                                    <p class="card-text">Opened on ${new Date(item.created_at).toLocaleDateString()}</p>
+                                    <a href="${item.html_url}" target="_blank" class="card-link">View Pull Request</a>
+                                </div>
+                            `;
+                            prContainer.appendChild(prCard);
+                        });
+
+                        // Fetch closed pull requests
+                        return fetch(`https://api.github.com/search/issues?q=is:pr+author:${username}+archived:false+is:closed`);
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const prCard = document.createElement('div');
+                            prCard.classList.add('card', 'mb-3');
+                            prCard.innerHTML = `
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">${item.repository_url.split('/').pop()}</h6>
+                                    <p class="card-text">Closed on ${new Date(item.closed_at).toLocaleDateString()}</p>
+                                    <a href="${item.html_url}" target="_blank" class="card-link">View Pull Request</a>
+                                </div>
+                            `;
+                            prContainer.appendChild(prCard);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            function getIssues(username) {
+                const issueContainer = document.getElementById('issue-container');
+                issueContainer.innerHTML = ''; // Clear previous results
+
+                // Fetch open issues
+                fetch(`https://api.github.com/search/issues?q=is:issue+author:${username}+archived:false+is:open`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const issueCard = document.createElement('div');
+                            issueCard.classList.add('card', 'mb-3');
+                            issueCard.innerHTML = `
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">${item.repository_url.split('/').pop()}</h6>
+                                    <p class="card-text">Opened on ${new Date(item.created_at).toLocaleDateString()}</p>
+                                    <a href="${item.html_url}" target="_blank" class="card-link">View Issue</a>
+                                </div>
+                            `;
+                            issueContainer.appendChild(issueCard);
+                        });
+
+                        // Fetch closed issues
+                        return fetch(`https://api.github.com/search/issues?q=is:issue+author:${username}+archived:false+is:closed`);
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        data.items.forEach(item => {
+                            const issueCard = document.createElement('div');
+                            issueCard.classList.add('card', 'mb-3');
+                            issueCard.innerHTML = `
+                                <div class="card-body">
+                                    <h5 class="card-title">${item.title}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">${item.repository_url.split('/').pop()}</h6>
+                                    <p class="card-text">Closed on ${new Date(item.closed_at).toLocaleDateString()}</p>
+                                    <a href="${item.html_url}" target="_blank" class="card-link">View Issue</a>
+                                </div>
+                            `;
+                            issueContainer.appendChild(issueCard);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            // Toggle between pull requests and issues
+            const prBtn = document.getElementById('pr-btn');
+            const issueBtn = document.getElementById('issue-btn');
+            const prContainer = document.getElementById('pr-container');
+            const issueContainer = document.getElementById('issue-container');
+
+            prBtn.addEventListener('click', () => {
+                prBtn.classList.add('active');
+                issueBtn.classList.remove('active');
+                prContainer.style.display = 'block';
+                issueContainer.style.display = 'none';
+            });
+
+            issueBtn.addEventListener('click', () => {
+                issueBtn.classList.add('active');
+                prBtn.classList.remove('active');
+                issueContainer.style.display = 'block';
+                prContainer.style.display = 'none';
+            });
+
+            // Replace 'axif0' with the desired GitHub username
+            getPullRequests('axif0');
+            getIssues('axif0');
+        </script>
     </body>
 </html>
